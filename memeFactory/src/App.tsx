@@ -1,9 +1,27 @@
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import Routes from "./routes/Routes";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
 
 function App() {
-  const account = useAccount()
-  const { connectors, connect, status, error } = useConnect()
-  const { disconnect } = useDisconnect()
+  return (
+    <div className="flex flex-col min-h-screen ">
+      <Header />
+      <main className="flex-1 justify-center">
+        <Routes />
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
+/* import { useAccount, useConnect, useDisconnect } from "wagmi";
+
+function App() {
+  const account = useAccount();
+  const { connectors, connect, status, error } = useConnect();
+  const { disconnect } = useDisconnect();
 
   return (
     <>
@@ -18,7 +36,7 @@ function App() {
           chainId: {account.chainId}
         </div>
 
-        {account.status === 'connected' && (
+        {account.status === "connected" && (
           <button type="button" onClick={() => disconnect()}>
             Disconnect
           </button>
@@ -40,7 +58,8 @@ function App() {
         <div>{error?.message}</div>
       </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
+ */

@@ -17,11 +17,8 @@ import {
 } from "@/components/ui/form";
 import { InputNumber } from "@/components/input/InputNumber";
 import { CreateMemeCoinFormData, createMemeCoinSchema } from "./validate";
-import { useSDK } from "@metamask/sdk-react";
-import { ethers } from "ethers";
 
 export function CreateMemeCoinForm() {
-  const { provider } = useSDK();
   const [hasPresale, setHasPresale] = useState(false);
 
   const form = useForm<CreateMemeCoinFormData>({
