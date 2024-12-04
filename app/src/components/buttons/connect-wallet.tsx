@@ -1,30 +1,35 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
+import { useSDK } from "@metamask/sdk-react";
 
 export function ConnectWallet() {
-  const [isConnected, setIsConnected] = useState(false);
+  const [account, setAccount] = useState<string>();
+  const { sdk, connected, connecting, provider, chainId } = useSDK();
 
-  /* const connectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        setIsConnected(true);
-      } catch (error) {
-        console.error("Falha ao conectar com o MetaMask", error);
-      }
-    } else {
-      alert("Por favor, instale o MetaMask!");
+  const connect = async () => {
+    try {
+      const accounts = await sdk?.connect();
+      setAccount(accounts?.[0]);
+    } catch (err) {
+      console.warn("failed to connect..", err);
     }
-  }; */
-
+  };
   return (
     <Button
-      /*  onClick={connectWallet} */
       className="bg-orange-500 hover:bg-orange-600 text-white"
+      onClick={connect}
     >
       <Wallet className="mr-2 h-4 w-4" />
-      {isConnected ? "Conectado" : "Conectar Carteira"}
+      {connected && (
+        <div>
+          <>
+            {account
+              ? `${account.slice(0, 6)}...${account.slice(-4)}`
+              : "Conectar Carteira"}
+          </>
+        </div>
+      )}
     </Button>
   );
 }
