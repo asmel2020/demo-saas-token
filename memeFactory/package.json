@@ -23,6 +23,7 @@
     "tailwindcss-animate": "^1.0.7",
     "viem": "latest",
     "wagmi": "latest",
+    "wouter": "^3.3.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
