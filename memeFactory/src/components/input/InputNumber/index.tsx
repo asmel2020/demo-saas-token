@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 interface Props {
   disabled?: boolean;
   onChange?: (e: string /* React.ChangeEvent<HTMLInputElement> */) => void;
@@ -25,6 +25,12 @@ export const InputNumber = ({
       setValue(value.replace(".", ","));
     }
   };
+
+  useEffect(() => {
+    if (valueInitial) {
+      setValue(valueInitial);
+    }
+  }, [valueInitial]);
   return (
     <Input
       id="input-number"

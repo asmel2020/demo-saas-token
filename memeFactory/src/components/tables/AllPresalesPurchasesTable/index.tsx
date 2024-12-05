@@ -15,9 +15,9 @@ interface Props {
 }
 
 export function AllPresalesPurchasesTable({ address }: Props) {
-  const { value, isSuccess } = useGetBuyInfo({ address });
+  const { valueGetBuyInfo, isSuccessGetBuyInfo } = useGetBuyInfo({ address });
 
-  if (!isSuccess) return null;
+  if (!isSuccessGetBuyInfo) return null;
 
   return (
     <Table>
@@ -31,9 +31,18 @@ export function AllPresalesPurchasesTable({ address }: Props) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {value.map((purchase) => (
+        {valueGetBuyInfo.map((purchase) => (
           <TableRow key={purchase.ownerBuy}>
-            <TableCell>{sliceWallet(purchase.ownerBuy)}</TableCell>
+            <TableCell>
+              <a
+                href={`https://testnet.bscscan.com/address/${purchase.ownerBuy}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-500 hover:underline hover:text-blue-700"
+              >
+                {sliceWallet(purchase.ownerBuy)}
+              </a>
+            </TableCell>
             <TableCell>{purchase.amountToken}</TableCell>
             <TableCell>{purchase.price}</TableCell>
             <TableCell>{purchase.buyDate}</TableCell>

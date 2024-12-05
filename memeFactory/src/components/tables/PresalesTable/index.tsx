@@ -72,7 +72,6 @@ export function PresalesTable() {
           <TableRow key={presale.symbol}>
             <TableCell>{presale.name}</TableCell>
             <TableCell>{presale.symbol}</TableCell>
-
             <TableCell>
               {format({
                 date: new Date(Number(presale.startTime) * 1000),
@@ -88,8 +87,27 @@ export function PresalesTable() {
             <TableCell>{ethers.formatEther(presale.priceToken)}</TableCell>
             <TableCell>{ethers.formatEther(presale.initialSupply)}</TableCell>
 
-            <TableCell>{sliceWallet(presale.owner)}</TableCell>
-            <TableCell>{sliceWallet(presale.contractAddress)}</TableCell>
+            <TableCell>
+              {" "}
+              <a
+                href={`https://testnet.bscscan.com/address/${presale.owner}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-500 hover:underline hover:text-blue-700"
+              >
+                {sliceWallet(presale.owner)}
+              </a>
+            </TableCell>
+            <TableCell>
+              <a
+                href={`https://testnet.bscscan.com/token/${presale.contractAddress}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-500 hover:underline hover:text-blue-700"
+              >
+                {sliceWallet(presale.contractAddress)}
+              </a>
+            </TableCell>
             <TableCell>
               <Button
                 disabled={!presale.isPreSale}

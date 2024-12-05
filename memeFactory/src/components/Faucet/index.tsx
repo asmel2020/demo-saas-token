@@ -20,7 +20,11 @@ import templateTokenAbi from "@/common/abi/templateToken.abi";
 import addressContract from "@/common/addressContract";
 import { useEthersProvider } from "@/common/utils/useEthersProvider";
 import chainId from "@/common/chainId";
-
+import { config } from "@/wagmi";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { useBalanceOf } from "@/hook/use-balance";
+import { ethers } from "ethers";
+import { sliceWallet } from "@/common/utils/sliceWallet";
 const faucetFormSchema = z.object({
   address: z
     .string()
@@ -32,8 +36,9 @@ type FaucetFormData = z.infer<typeof faucetFormSchema>;
 
 export function Faucet() {
   const account = useAccount();
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
   const provider = useEthersProvider();
+  const { balance, refetchBalance } = useBalanceOf();
 
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -44,8 +49,9 @@ export function Faucet() {
       address: (account.address as `0x${string}`) || "",
     },
   });
-
+  const [disabled, setDisabled] = useState(false);
   const onSubmit = async () => {
+    setDisabled(true);
     try {
       // Simular uma chamada de API
       const transactionCount = await provider?.getTransactionCount(
@@ -53,18 +59,25 @@ export function Faucet() {
         "latest"
       );
 
-      await writeContractAsync({
+      const hash = await writeContractAsync({
         abi: templateTokenAbi,
         address: addressContract.tokenAddress as `0x${string}`,
         functionName: "mintFauces",
         nonce: transactionCount,
         chainId,
       });
-
+      await waitForTransactionReceipt(config, {
+        hash,
+        confirmations: 6,
+        chainId,
+      });
+      setDisabled(false);
+      await refetchBalance();
       // Simular sucesso (em produção, isso seria uma chamada real à API ou smart contract)
       setStatus("success");
       setMessage("1000 tokens foram enviados para o seu endereço!");
     } catch (error) {
+      setDisabled(false);
       setStatus("error");
       setMessage(
         "Ocorreu um erro ao enviar os tokens. Por favor, tente novamente."
@@ -74,6 +87,20 @@ export function Faucet() {
 
   return (
     <div className="space-y-6">
+      <section className="space-y-8">
+        balance usdt: {ethers.formatEther(balance || "0") || "0,00"}
+      </section>
+      <section className="space-y-8">
+        Contract address :{" "}
+        <a
+          href={`https://testnet.bscscan.com/token/${addressContract.tokenAddress}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-500 hover:underline hover:text-blue-700"
+        >
+          {sliceWallet(addressContract.tokenAddress)}
+        </a>{" "}
+      </section>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -87,7 +114,7 @@ export function Faucet() {
                     placeholder="0x..."
                     {...field}
                     readOnly
-                    disabled={isPending}
+                    disabled={disabled}
                   />
                 </FormControl>
                 <FormDescription>
@@ -97,7 +124,7 @@ export function Faucet() {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={disabled}>
             Reivindicar Tokens
           </Button>
         </form>

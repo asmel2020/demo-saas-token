@@ -24,7 +24,10 @@ import { useGetBuyInfo } from "@/hook/get-buy-info";
 import { useApprove } from "@/hook/use-approve";
 import { useAllowance } from "@/hook/use-allowance";
 import chainId from "@/common/chainId";
-
+import { config } from "@/wagmi";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { useGetBuyTokenUser } from "@/hook/get-buy-token-user";
+import toast from "react-hot-toast";
 const presaleFormSchema = z.object({
   amount: z
     .number()
@@ -44,10 +47,12 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
   const [usdtToPay, setUsdtToPay] = useState(0);
   const account = useAccount();
   const provider = useEthersProvider();
-  const { writeContractAsync, isSuccess } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
 
   const { approverSend, isSuccessApprover, isPendingApprover } = useApprove();
-  const { refetch } = useGetBuyInfo({ address });
+
+  const { refetchGetBuyInfo } = useGetBuyInfo({ address });
+  const { refetchUser } = useGetBuyTokenUser({ address });
   const { allowance, refetchAllowance } = useAllowance({
     address: addressContract.preSaleAddress as `0x${string}`,
   });
@@ -68,7 +73,7 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
       "latest"
     );
     try {
-      await writeContractAsync({
+      const hash = await writeContractAsync({
         abi: preSaleAbi,
         address: addressContract.preSaleAddress as `0x${string}`,
         functionName: "buyToken",
@@ -76,21 +81,22 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
         nonce: transactionCount,
         chainId,
       });
+
+      await waitForTransactionReceipt(config, {
+        hash,
+        confirmations: 6,
+        chainId,
+      });
+      await refetchUser();
+      await refetchGetBuyInfo();
+      setDisabled(false);
+      toast.success("Compra realizada com sucesso");
+      setUsdtToPay(0);
+      form.reset();
     } catch (error) {
       setDisabled(false);
     }
   };
-
-  const successTransaction = async () => {
-    setDisabled(false);
-    await refetch();
-  };
-
-  useEffect(() => {
-    if (isSuccess) {
-      successTransaction();
-    }
-  }, [isSuccess]);
 
   useEffect(() => {
     if (isSuccessApprover) {

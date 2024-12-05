@@ -27,17 +27,24 @@ import { toast } from "react-hot-toast";
 import { useAllowance } from "@/hook/use-allowance";
 import { useApprove } from "@/hook/use-approve";
 import chainId from "@/common/chainId";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { config } from "@/wagmi";
+import { TokenCreatedDialog } from "@/components/dialog/TokenCreatedDialog";
+
 export function CreateMemeCoinForm() {
   const account = useAccount();
   const [disabled, setDisabled] = useState(false);
   const [hasPresale, setHasPresale] = useState(false);
-  const { writeContractAsync, isSuccess } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [contractAddressCreated, setContractAddressCreated] = useState("0x");
   const provider = useEthersProvider();
 
   const { allowance, refetchAllowance } = useAllowance({
     address: addressContract.memeFactoryAddress as `0x${string}`,
   });
-  const { approverSend, isSuccessApprover } = useApprove();
+
+  const { approverSend, isSuccessApprover, isPendingApprover } = useApprove();
 
   const form = useForm<CreateMemeCoinFormData>({
     resolver: zodResolver(createMemeCoinSchema),
@@ -73,7 +80,7 @@ export function CreateMemeCoinForm() {
       "latest"
     );
     try {
-      await writeContractAsync({
+      const hash = await writeContractAsync({
         abi: memeFactoryAbi,
         address: addressContract.memeFactoryAddress as `0x${string}`,
         functionName: "deploy",
@@ -81,21 +88,30 @@ export function CreateMemeCoinForm() {
         nonce: transactionCount,
         chainId,
       });
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+        confirmations: 6,
+        chainId,
+      });
+      setDisabled(false);
+      toast.success("Meme coin criado com sucesso");
+      for (let index = 0; index < transactionReceipt.logs.length; index++) {
+        const { address, topics, data } = transactionReceipt.logs[index];
+        if (address === addressContract.memeFactoryAddress) {
+          const iface = new ethers.Interface(memeFactoryAbi);
+          const decodedEvent = iface.parseLog({ data, topics });
+          setContractAddressCreated(decodedEvent?.args[0] || "0x");
+        }
+      }
       form.reset();
+      setIsDialogOpen(true);
     } catch (error) {
       setDisabled(false);
     }
   };
 
   useEffect(() => {
-    if (isSuccess) {
-      setDisabled(false);
-      toast.success("Meme coin criado com sucesso");
-    }
-  }, [isSuccess]);
-
-  useEffect(() => {
-    console.log("form.formState.errors");
     if (form.formState.errors?.presaleTokenAmount) {
       toast.error(form.formState.errors.presaleTokenAmount.message as string);
     }
@@ -111,6 +127,11 @@ export function CreateMemeCoinForm() {
 
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b text-black flex justify-center">
+      <TokenCreatedDialog
+        contractAddressCreated={contractAddressCreated}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+      />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -261,16 +282,6 @@ export function CreateMemeCoinForm() {
                         dateEnd={addYear(new Date(), 5)}
                         isClose={true}
                       />
-                      {/*  <Input
-                        min="2024-12-04"
-                        max="2024-12-31"
-                        type="datetime-local"
-                       
-                        onChange={(e) =>
-                          field.onChange(new Date(e.target.value))
-                        }
-                        disabled={disabled}
-                      /> */}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -328,7 +339,7 @@ export function CreateMemeCoinForm() {
                   address: addressContract.memeFactoryAddress as `0x${string}`,
                 })
               }
-              disabled={disabled}
+              disabled={isPendingApprover}
             >
               Approver
             </Button>

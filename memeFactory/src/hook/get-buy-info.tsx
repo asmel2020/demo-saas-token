@@ -11,8 +11,12 @@ interface Props {
 }
 
 export const useGetBuyInfo = ({ address }: Props) => {
-  const [value, setValue] = useState<GetBuyTokenInfo[]>([]);
-  const { data, isSuccess, refetch } = useReadContract({
+  const [valueGetBuyInfo, setValue] = useState<GetBuyTokenInfo[]>([]);
+  const {
+    data,
+    isSuccess: isSuccessGetBuyInfo,
+    refetch: refetchGetBuyInfo,
+  } = useReadContract({
     abi: preSaleAbi,
     address: addressContract.preSaleAddress as `0x${string}`,
     functionName: "getBuyTokenInfo",
@@ -21,7 +25,7 @@ export const useGetBuyInfo = ({ address }: Props) => {
   });
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccessGetBuyInfo) {
       const newDate = ((data as GetBuyTokenInfo[]) || []).map((item) => ({
         buyDate: format({
           date: new Date(Number(item.buyDate.toString()) * 1000),
@@ -41,6 +45,6 @@ export const useGetBuyInfo = ({ address }: Props) => {
         )
       );
     }
-  }, [isSuccess]);
-  return { value, isSuccess, refetch };
+  }, [isSuccessGetBuyInfo]);
+  return { valueGetBuyInfo, isSuccessGetBuyInfo, refetchGetBuyInfo };
 };
