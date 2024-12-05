@@ -1,5 +1,6 @@
 import memeFactoryAbi from "@/common/abi/memeFactory.abi";
 import addressContract from "@/common/addressContract";
+import chainId from "@/common/chainId";
 import { GetContractsResponse } from "@/common/interfaces/getContracts.interfaces";
 import { sliceWallet } from "@/common/utils/sliceWallet";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export function PresalesTable() {
     abi: memeFactoryAbi,
     address: addressContract.memeFactoryAddress as `0x${string}`,
     functionName: "getDeployedContracts",
-    chainId: 1337,
+    chainId,
   });
   /*  const navigate = useNavigate(); */
 
@@ -45,7 +46,8 @@ export function PresalesTable() {
         initialSupply: item.initialSupply.toString(),
         priceToken: item.priceToken.toString(),
       }));
-      setValue(dataFormat);
+
+      setValue(dataFormat.reverse());
     }
   }, [isSuccess]);
 

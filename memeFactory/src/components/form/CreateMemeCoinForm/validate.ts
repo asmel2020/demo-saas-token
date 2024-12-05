@@ -53,7 +53,7 @@ export const createMemeCoinSchema = z
     message: "A data de vencimento deve ser posterior à data de início",
     path: ["fechaExpiracion"],
   })
-  .refine((data) => data.initialSupply > data.presaleTokenAmount, {
+  .refine((data) => data.initialSupply >= data.presaleTokenAmount, {
     message:
       "A quantidade de tokens vendidos deve ser menor em relação à quantidade inicial",
     path: ["presaleTokenAmount"],

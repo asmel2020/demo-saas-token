@@ -19,6 +19,7 @@ import { useAccount, useWriteContract } from "wagmi";
 import templateTokenAbi from "@/common/abi/templateToken.abi";
 import addressContract from "@/common/addressContract";
 import { useEthersProvider } from "@/common/utils/useEthersProvider";
+import chainId from "@/common/chainId";
 
 const faucetFormSchema = z.object({
   address: z
@@ -31,7 +32,7 @@ type FaucetFormData = z.infer<typeof faucetFormSchema>;
 
 export function Faucet() {
   const account = useAccount();
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync, isPending } = useWriteContract();
   const provider = useEthersProvider();
 
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -57,7 +58,7 @@ export function Faucet() {
         address: addressContract.tokenAddress as `0x${string}`,
         functionName: "mintFauces",
         nonce: transactionCount,
-        chainId: 1337,
+        chainId,
       });
 
       // Simular sucesso (em produção, isso seria uma chamada real à API ou smart contract)
@@ -82,7 +83,12 @@ export function Faucet() {
               <FormItem>
                 <FormLabel>Endereço Ethereum</FormLabel>
                 <FormControl>
-                  <Input placeholder="0x..." {...field} readOnly />
+                  <Input
+                    placeholder="0x..."
+                    {...field}
+                    readOnly
+                    disabled={isPending}
+                  />
                 </FormControl>
                 <FormDescription>
                   Insira seu endereço Ethereum para receber os tokens.
@@ -91,7 +97,9 @@ export function Faucet() {
               </FormItem>
             )}
           />
-          <Button type="submit">Reivindicar Tokens</Button>
+          <Button type="submit" disabled={isPending}>
+            Reivindicar Tokens
+          </Button>
         </form>
       </Form>
 

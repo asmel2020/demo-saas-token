@@ -1,5 +1,6 @@
 import preSaleAbi from "@/common/abi/preSale.abi";
 import addressContract from "@/common/addressContract";
+import chainId from "@/common/chainId";
 import { GetPreSaleInfo } from "@/common/interfaces/getPreSaleInfo.interfaces";
 import { PresaleForm } from "@/components/form/PresaleForm";
 import { AllPresalesPurchasesTable } from "@/components/tables/AllPresalesPurchasesTable";
@@ -30,7 +31,7 @@ export default function TokenPresale() {
     address: addressContract.preSaleAddress as `0x${string}`,
     functionName: "getPreSaleInfo",
     args: [params.address],
-    chainId: 1337,
+    chainId,
   });
 
   useEffect(() => {

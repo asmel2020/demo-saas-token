@@ -1,5 +1,6 @@
 import preSaleAbi from "@/common/abi/preSale.abi";
 import addressContract from "@/common/addressContract";
+import chainId from "@/common/chainId";
 import { format } from "@formkit/tempo";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
@@ -16,7 +17,7 @@ export const useGetBuyInfo = ({ address }: Props) => {
     address: addressContract.preSaleAddress as `0x${string}`,
     functionName: "getBuyTokenInfo",
     args: [address],
-    chainId: 1337,
+    chainId,
   });
 
   useEffect(() => {

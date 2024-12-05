@@ -7,7 +7,7 @@ let usdtFake: TokenTemplate;
 let tokenTemplate: TokenTemplate;
 let preSale: PreSale;
 
-describe("p2p", function () {
+describe("end2end", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
@@ -229,9 +229,11 @@ describe("p2p", function () {
     });
 
     it("consul buy user", async () => {
-      const d = await preSale.getBuyTokenUser(await tokenTemplate.getAddress());
-
-      console.log(d);
+      const [owner] = await hre.ethers.getSigners();
+      await preSale.getBuyTokenUser(
+        await tokenTemplate.getAddress(),
+        owner.address
+      );
     });
 
     it("rewards tokens user", async () => {

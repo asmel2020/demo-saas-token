@@ -14,13 +14,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { InputNumber } from "@/components/input/InputNumber";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { useEthersProvider } from "@/common/utils/useEthersProvider";
 import preSaleAbi from "@/common/abi/preSale.abi";
 import addressContract from "@/common/addressContract";
 import { ethers } from "ethers";
-import templateTokenAbi from "@/common/abi/templateToken.abi";
+
 import { useGetBuyInfo } from "@/hook/get-buy-info";
+import { useApprove } from "@/hook/use-approve";
+import { useAllowance } from "@/hook/use-allowance";
+import chainId from "@/common/chainId";
 
 const presaleFormSchema = z.object({
   amount: z
@@ -42,16 +45,11 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
   const account = useAccount();
   const provider = useEthersProvider();
   const { writeContractAsync, isSuccess } = useWriteContract();
+
+  const { approverSend, isSuccessApprover, isPendingApprover } = useApprove();
   const { refetch } = useGetBuyInfo({ address });
-  const { data: allowance } = useReadContract({
-    abi: templateTokenAbi,
-    address: addressContract.tokenAddress as `0x${string}`,
-    functionName: "allowance",
-    args: [
-      account?.address as `0x${string}`,
-      addressContract.preSaleAddress as `0x${string}`,
-    ],
-    chainId: 1337,
+  const { allowance, refetchAllowance } = useAllowance({
+    address: addressContract.preSaleAddress as `0x${string}`,
   });
 
   const [disabled, setDisabled] = useState(false);
@@ -62,31 +60,6 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
       amount: 0,
     },
   });
-
-  const approverSend = async () => {
-    // Simular uma chamada de API
-
-    setDisabled(true);
-    const transactionCount = await provider?.getTransactionCount(
-      account.address as `0x${string}`,
-      "latest"
-    );
-    try {
-      await writeContractAsync({
-        abi: templateTokenAbi,
-        address: addressContract.tokenAddress as `0x${string}`,
-        functionName: "approve",
-        args: [
-          addressContract.preSaleAddress as `0x${string}`,
-          ethers.parseEther("10000"),
-        ],
-        nonce: transactionCount,
-        chainId: 1337,
-      });
-    } catch (error) {
-      setDisabled(false);
-    }
-  };
 
   const onSubmit = async (data: PresaleFormData) => {
     setDisabled(true);
@@ -101,7 +74,7 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
         functionName: "buyToken",
         args: [address, ethers.parseEther(data.amount.toString())],
         nonce: transactionCount,
-        chainId: 1337,
+        chainId,
       });
     } catch (error) {
       setDisabled(false);
@@ -112,11 +85,19 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
     setDisabled(false);
     await refetch();
   };
+
   useEffect(() => {
     if (isSuccess) {
       successTransaction();
     }
   }, [isSuccess]);
+
+  useEffect(() => {
+    if (isSuccessApprover) {
+      setDisabled(false);
+      refetchAllowance();
+    }
+  }, [isSuccessApprover]);
 
   const calculateUsdt = (amount: number) => {
     return amount * tokenPrice;
@@ -154,7 +135,15 @@ export function PresaleForm({ tokenPrice, tokenSymbol, address }: Props) {
           Total a pagar: {usdtToPay.toFixed(2)} USDT
         </div>
         {Number(allowance || 0) < ethers.parseEther("20") ? (
-          <Button type="button" onClick={approverSend} disabled={disabled}>
+          <Button
+            type="button"
+            onClick={() =>
+              approverSend({
+                address: addressContract.preSaleAddress as `0x${string}`,
+              })
+            }
+            disabled={isPendingApprover}
+          >
             Aprovar
           </Button>
         ) : (

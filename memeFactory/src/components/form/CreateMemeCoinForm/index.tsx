@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -17,31 +16,28 @@ import {
 } from "@/components/ui/form";
 import { InputNumber } from "@/components/input/InputNumber";
 import { CreateMemeCoinFormData, createMemeCoinSchema } from "./validate";
-import { useReadContract, useWriteContract, useAccount } from "wagmi";
+import { useWriteContract, useAccount } from "wagmi";
 import memeFactoryAbi from "@/common/abi/memeFactory.abi";
 import addressContract from "@/common/addressContract";
 import { ethers } from "ethers";
-import templateTokenAbi from "@/common/abi/templateToken.abi";
 import { useEthersProvider } from "@/common/utils/useEthersProvider";
 import { addDay, addYear } from "@formkit/tempo";
 import { CalendarTime } from "@/components/input/CalendarTime";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
+import { useAllowance } from "@/hook/use-allowance";
+import { useApprove } from "@/hook/use-approve";
+import chainId from "@/common/chainId";
 export function CreateMemeCoinForm() {
+  const account = useAccount();
   const [disabled, setDisabled] = useState(false);
   const [hasPresale, setHasPresale] = useState(false);
   const { writeContractAsync, isSuccess } = useWriteContract();
-  const account = useAccount();
   const provider = useEthersProvider();
-  const { data: allowance } = useReadContract({
-    abi: templateTokenAbi,
-    address: addressContract.tokenAddress as `0x${string}`,
-    functionName: "allowance",
-    args: [
-      account?.address as `0x${string}`,
-      addressContract.memeFactoryAddress as `0x${string}`,
-    ],
-    chainId: 1337,
+
+  const { allowance, refetchAllowance } = useAllowance({
+    address: addressContract.memeFactoryAddress as `0x${string}`,
   });
+  const { approverSend, isSuccessApprover } = useApprove();
 
   const form = useForm<CreateMemeCoinFormData>({
     resolver: zodResolver(createMemeCoinSchema),
@@ -58,24 +54,6 @@ export function CreateMemeCoinForm() {
     },
   });
 
-  const approverSend = async () => {
-    // Simular uma chamada de API
-    const transactionCount = await provider?.getTransactionCount(
-      account.address as `0x${string}`,
-      "latest"
-    );
-    await writeContractAsync({
-      abi: templateTokenAbi,
-      address: addressContract.tokenAddress as `0x${string}`,
-      functionName: "approve",
-      args: [
-        addressContract.memeFactoryAddress as `0x${string}`,
-        ethers.parseEther("10000"),
-      ],
-      nonce: transactionCount,
-      chainId: 1337,
-    });
-  };
   const onSubmit = async (data: CreateMemeCoinFormData) => {
     setDisabled(true);
     const dataContract = {
@@ -90,8 +68,6 @@ export function CreateMemeCoinForm() {
       amountSellToken: ethers.parseEther(data.presaleTokenAmount.toString()),
       salt: ethers.keccak256(ethers.randomBytes(32)),
     };
-
-    console.log(dataContract);
     const transactionCount = await provider?.getTransactionCount(
       account.address as `0x${string}`,
       "latest"
@@ -103,17 +79,18 @@ export function CreateMemeCoinForm() {
         functionName: "deploy",
         args: [dataContract],
         nonce: transactionCount,
-        chainId: 1337,
+        chainId,
       });
+      form.reset();
     } catch (error) {
       setDisabled(false);
     }
   };
 
-  console.log(form.formState.errors);
   useEffect(() => {
     if (isSuccess) {
       setDisabled(false);
+      toast.success("Meme coin criado com sucesso");
     }
   }, [isSuccess]);
 
@@ -123,9 +100,17 @@ export function CreateMemeCoinForm() {
       toast.error(form.formState.errors.presaleTokenAmount.message as string);
     }
   }, [form.formState.errors]);
+
+  useEffect(() => {
+    if (isSuccessApprover) {
+      setDisabled(false);
+      toast.success("Aprovado com sucesso");
+      refetchAllowance();
+    }
+  }, [isSuccessApprover]);
+
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b text-black flex justify-center">
-      <Toaster />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -336,7 +321,15 @@ export function CreateMemeCoinForm() {
             </>
           )}
           {Number(allowance || 0) < ethers.parseEther("20") ? (
-            <Button type="button" onClick={approverSend} disabled={disabled}>
+            <Button
+              type="button"
+              onClick={() =>
+                approverSend({
+                  address: addressContract.memeFactoryAddress as `0x${string}`,
+                })
+              }
+              disabled={disabled}
+            >
               Approver
             </Button>
           ) : (
