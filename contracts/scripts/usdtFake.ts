@@ -2,7 +2,7 @@ import hre from "hardhat";
 import { TokenTemplate } from "../types";
 
 export async function deployToken() {
-  const [owner, a] = await hre.ethers.getSigners();
+  const [owner] = await hre.ethers.getSigners();
   const TokenTemplate = await hre.ethers.getContractFactory("TokenTemplate");
   const tokenTemplate = (await TokenTemplate.deploy(
     owner.address,
@@ -12,7 +12,7 @@ export async function deployToken() {
     false,
     false,
     0,
-    a.address
+    owner.address
   )) as unknown as TokenTemplate;
 
   console.log((await hre.ethers.provider.getNetwork()).chainId);

@@ -24,6 +24,13 @@ const config: HardhatUserConfig = {
         interval: 1000,
       },
     },
+    bscTestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: [
+        `0xea6c44ac03bff858b476bba40716402b03e41b8e97e276d1baec7c37d42484a0`,
+      ],
+    },
   },
   abiExporter: {
     path: "./abi",

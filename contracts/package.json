@@ -6,7 +6,8 @@
     "compile": "npx hardhat compile && npx hardhat typechain",
     "test": "npx hardhat test",
     "local:node": "npx hardhat node",
-    "local:deploy": "npm run compile && npx hardhat run scripts/deploySystem.ts --network localhost"
+    "local:deploy": "npm run compile && npx hardhat run scripts/deploySystem.ts --network localhost",
+    "bsc:deploy": "npm run compile && npx hardhat run scripts/deploySystem.ts --network bscTestnet"
   },
   "author": "",
   "license": "ISC",
