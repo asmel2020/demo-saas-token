@@ -30,6 +30,7 @@ import chainId from "@/common/chainId";
 import { waitForTransactionReceipt } from "@wagmi/core";
 import { config } from "@/wagmi";
 import { TokenCreatedDialog } from "@/components/dialog/TokenCreatedDialog";
+import { useCreateToken } from "@/hook/create-token";
 
 export function CreateMemeCoinForm() {
   const account = useAccount();
@@ -37,9 +38,8 @@ export function CreateMemeCoinForm() {
   const [hasPresale, setHasPresale] = useState(false);
   const { writeContractAsync } = useWriteContract();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [contractAddressCreated, setContractAddressCreated] = useState("0x");
   const provider = useEthersProvider();
-
+  const { setAddress } = useCreateToken();
   const { allowance, refetchAllowance } = useAllowance({
     address: addressContract.memeFactoryAddress as `0x${string}`,
   });
@@ -101,7 +101,7 @@ export function CreateMemeCoinForm() {
         if (address === addressContract.memeFactoryAddress) {
           const iface = new ethers.Interface(memeFactoryAbi);
           const decodedEvent = iface.parseLog({ data, topics });
-          setContractAddressCreated(decodedEvent?.args[0] || "0x");
+          setAddress(decodedEvent?.args[0] || "0x");
         }
       }
       form.reset();
@@ -128,7 +128,6 @@ export function CreateMemeCoinForm() {
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b text-black flex justify-center">
       <TokenCreatedDialog
-        contractAddressCreated={contractAddressCreated}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
       />

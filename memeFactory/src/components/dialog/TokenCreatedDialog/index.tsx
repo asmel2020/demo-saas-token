@@ -10,18 +10,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { sliceWallet } from "@/common/utils/sliceWallet";
+import { useCreateToken } from "@/hook/create-token";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  contractAddressCreated: string;
 }
 
-export function TokenCreatedDialog({
-  isOpen,
-  onClose,
-  contractAddressCreated,
-}: Props) {
+export function TokenCreatedDialog({ isOpen, onClose }: Props) {
+  const { address } = useCreateToken();
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -30,12 +27,12 @@ export function TokenCreatedDialog({
           <DialogDescription>
             Seu token foi criado com sucesso. seu endereço é{" "}
             <a
-              href={`https://testnet.bscscan.com/token/${contractAddressCreated}`}
+              href={`https://testnet.bscscan.com/token/${address}`}
               target="_blank"
               rel="noreferrer"
               className="text-blue-500 hover:underline hover:text-blue-700"
             >
-              {sliceWallet(contractAddressCreated)}
+              {sliceWallet(address)}
             </a>
           </DialogDescription>
         </DialogHeader>
