@@ -7,19 +7,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useGetBuyTokenUser } from "@/hook/get-buy-token-user";
 
-interface UserPurchase {
-  id: string;
-  amount: number;
-  totalPaid: number;
-  date: string;
+interface Props {
+  address: string;
 }
 
-interface UserPurchasesTableProps {
-  purchases: UserPurchase[];
-}
+export function UserPurchasesTable({ address }: Props) {
+  const { valueUser, isSuccessUser } = useGetBuyTokenUser({ address });
 
-export function UserPurchasesTable({ purchases }: UserPurchasesTableProps) {
+  if (!isSuccessUser) return null;
   return (
     <Table>
       <TableCaption>Suas compras na pré-venda</TableCaption>
@@ -31,11 +28,11 @@ export function UserPurchasesTable({ purchases }: UserPurchasesTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {purchases.map((purchase) => (
-          <TableRow key={purchase.id}>
-            <TableCell>{purchase.amount}</TableCell>
-            <TableCell>{purchase.totalPaid}</TableCell>
-            <TableCell>{purchase.date}</TableCell>
+        {valueUser.map((purchase) => (
+          <TableRow key={purchase.buyDate}>
+            <TableCell>{purchase.amountToken}</TableCell>
+            <TableCell>{purchase.price}</TableCell>
+            <TableCell>{purchase.buyDate}</TableCell>
           </TableRow>
         ))}
       </TableBody>

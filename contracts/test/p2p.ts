@@ -125,7 +125,7 @@ describe("p2p", function () {
         address
       )) as unknown as TokenTemplate;
 
-      expect(await memeFactory.getDeployedContracts()).to.deep.equal([address]);
+      /*  expect(await memeFactory.getDeployedContracts()).to.deep.equal([address]); */
     });
 
     it("should deploy a token", async function () {

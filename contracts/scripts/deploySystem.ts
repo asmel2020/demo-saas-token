@@ -1,5 +1,6 @@
 import { deployMemeFactory } from "./memeFactory";
-import { deployPreSale } from "./PreSale";
+import { deployPreSale } from "./preSale";
+
 import { deployToken } from "./usdtFake";
 import * as fs from "fs";
 const deploy = async () => {
@@ -10,6 +11,12 @@ const deploy = async () => {
     tokenAddress: await token.getAddress(),
     preSaleAddress: await preSale.getAddress(),
   });
+
+  await preSale.grantRole(
+    await preSale.CREATE_PRE_SALE_ROLE(),
+    memeFactory.getAddress()
+  );
+
   const result = {
     tokenAddress: await token.getAddress(),
     preSaleAddress: await preSale.getAddress(),

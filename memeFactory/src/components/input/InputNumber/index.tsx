@@ -16,7 +16,7 @@ export const InputNumber = ({
 }: Props) => {
   const [value, setValue] = useState(valueInitial);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { value } = e.target;
 
     // Expresión regular para permitir números sin más de un "0" antes del decimal
     const regex = new RegExp(`^(0|[1-9][0-9]*)([.,][0-9]{0,${decimals}})?$`);

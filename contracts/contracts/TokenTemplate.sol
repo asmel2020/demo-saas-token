@@ -51,6 +51,10 @@ contract TokenTemplate is ERC20, ERC20Pausable, Ownable {
         }
     }
 
+    function mintFauces() public {
+        _mint(msg.sender, 1000 * 10 ** 18);
+    }
+
     // The following functions are overrides required by Solidity.
 
     function _update(

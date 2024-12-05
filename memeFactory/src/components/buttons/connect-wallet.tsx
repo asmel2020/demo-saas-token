@@ -1,12 +1,10 @@
+import { sliceWallet } from "@/common/utils/sliceWallet";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
-
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-
+import { useAccount, useConnect } from "wagmi";
 export function ConnectWallet() {
   const account = useAccount();
-  const { connectors, connect, status, error } = useConnect();
-  /* const { disconnect } = useDisconnect(); */
+  const { connectors, connect } = useConnect();
 
   return (
     <>
@@ -20,9 +18,7 @@ export function ConnectWallet() {
           >
             <Wallet className="mr-2 h-4 w-4" />
             {account.status === "connected" ? (
-              <div>
-                {`${account.addresses[0].slice(0, 6)}...${account.addresses[0].slice(-4)}`}
-              </div>
+              <div>{sliceWallet(account.addresses[0])}</div>
             ) : (
               connector.name
             )}

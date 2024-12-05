@@ -16,8 +16,8 @@ export const createMemeCoinSchema = z
     ),
     isMintable: z.boolean(),
     hasPresale: z.boolean(),
-    presaleStartDate: z.date().optional(),
-    presaleEndDate: z.date().optional(),
+    presaleStartDate: z.date(),
+    presaleEndDate: z.date(),
     presalePrice: z.preprocess(
       (val) => Number(String(val).replace(",", ".")),
       z.number().positive({
@@ -48,6 +48,15 @@ export const createMemeCoinSchema = z
         "Todos os campos de pré-venda são obrigatórios quando a pré-venda está ativada",
       path: ["hasPresale"],
     }
-  );
+  )
+  .refine((data) => data.presaleEndDate > data.presaleStartDate, {
+    message: "A data de vencimento deve ser posterior à data de início",
+    path: ["fechaExpiracion"],
+  })
+  .refine((data) => data.initialSupply > data.presaleTokenAmount, {
+    message:
+      "A quantidade de tokens vendidos deve ser menor em relação à quantidade inicial",
+    path: ["presaleTokenAmount"],
+  });
 
 export type CreateMemeCoinFormData = z.infer<typeof createMemeCoinSchema>;

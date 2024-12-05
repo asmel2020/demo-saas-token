@@ -14,6 +14,8 @@ export async function deployToken() {
     0,
     a.address
   )) as unknown as TokenTemplate;
+
+  console.log((await hre.ethers.provider.getNetwork()).chainId);
   await tokenTemplate.waitForDeployment();
   return tokenTemplate;
 }

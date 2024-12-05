@@ -1,3 +1,4 @@
+import { sliceWallet } from "@/common/utils/sliceWallet";
 import {
   Table,
   TableBody,
@@ -7,22 +8,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useGetBuyInfo } from "@/hook/get-buy-info";
 
-interface Purchase {
-  id: string;
-  buyer: string;
-  amount: number;
-  totalPaid: number;
-  date: string;
+interface Props {
+  address: string;
 }
 
-interface AllPresalesPurchasesTableProps {
-  purchases: Purchase[];
-}
+export function AllPresalesPurchasesTable({ address }: Props) {
+  const { value, isSuccess } = useGetBuyInfo({ address });
 
-export function AllPresalesPurchasesTable({
-  purchases,
-}: AllPresalesPurchasesTableProps) {
+  if (!isSuccess) return null;
+
   return (
     <Table>
       <TableCaption>Todas as compras realizadas na pré-venda</TableCaption>
@@ -35,12 +31,12 @@ export function AllPresalesPurchasesTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {purchases.map((purchase) => (
-          <TableRow key={purchase.id}>
-            <TableCell>{purchase.buyer}</TableCell>
-            <TableCell>{purchase.amount}</TableCell>
-            <TableCell>{purchase.totalPaid}</TableCell>
-            <TableCell>{purchase.date}</TableCell>
+        {value.map((purchase) => (
+          <TableRow key={purchase.ownerBuy}>
+            <TableCell>{sliceWallet(purchase.ownerBuy)}</TableCell>
+            <TableCell>{purchase.amountToken}</TableCell>
+            <TableCell>{purchase.price}</TableCell>
+            <TableCell>{purchase.buyDate}</TableCell>
           </TableRow>
         ))}
       </TableBody>

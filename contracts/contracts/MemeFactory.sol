@@ -36,6 +36,20 @@ contract MemeFactory is
         bytes32 salt;
     }
 
+    struct DeployedContracts {
+        string name;
+        string symbol;
+        uint256 initialSupply;
+        bool isSupplyMintable;
+        bool isPreSale;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 priceToken;
+        uint256 amountSellToken;
+        address contractAddress;
+        address owner;
+    }
+
     struct PricePlan {
         uint256 priceDeployToken;
         uint256 pricePreSaleToken;
@@ -45,7 +59,7 @@ contract MemeFactory is
 
     mapping(bytes32 => address) public deployedContractsMap;
 
-    address[] public deployedContracts;
+    DeployedContracts[] public deployedContracts;
 
     IPreSale public iPreSale;
 
@@ -139,13 +153,31 @@ contract MemeFactory is
             );
         }
 
-        deployedContracts.push(deployedAddress);
+        deployedContracts.push(
+            DeployedContracts(
+                _deploy.name,
+                _deploy.symbol,
+                _deploy.initialSupply,
+                _deploy.isSupplyMintable,
+                _deploy.isPreSale,
+                _deploy.startTime,
+                _deploy.endTime,
+                _deploy.priceToken,
+                _deploy.amountSellToken,
+                deployedAddress,
+                msg.sender
+            )
+        );
         token.transferFrom(msg.sender, address(this), priceDeploy);
         emit Deployed(deployedAddress, msg.sender, _deploy.initialSupply);
     }
 
     // Obtener todas las direcciones de contratos desplegados
-    function getDeployedContracts() public view returns (address[] memory) {
+    function getDeployedContracts()
+        public
+        view
+        returns (DeployedContracts[] memory)
+    {
         return deployedContracts;
     }
 
@@ -167,6 +199,10 @@ contract MemeFactory is
         );
 
         return Create2.computeAddress(_deploy.salt, keccak256(bytecode));
+    }
+
+    function getAddressPreSale() public view returns (address) {
+        return address(iPreSale);
     }
 
     function pause() public onlyOwner {

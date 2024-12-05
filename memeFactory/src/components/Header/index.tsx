@@ -26,10 +26,18 @@ export const Header = () => {
         </Link>
         <Link
           className="text-sm font-medium hover:text-yellow-300 transition-colors"
-          href="/pre-buy"
+          href="/list-presale"
         >
           {" "}
-          Pré-venda
+          List pré-venda
+        </Link>
+
+        <Link
+          className="text-sm font-medium hover:text-yellow-300 transition-colors"
+          href="/faucet"
+        >
+          {" "}
+          Faucet
         </Link>
 
         <ConnectWallet />

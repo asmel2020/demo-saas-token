@@ -22,11 +22,12 @@ contract PreSale is
     bytes32 public constant CREATE_PRE_SALE_ROLE =
         keccak256("CREATE_PRE_SALE_ROLE");
 
-    mapping(address => PreSaleInfo) public preSaleInfo;
-    mapping(address => BuyTokenInfo[]) public buyTokenInfo;
-    mapping(address => mapping(address => BuyTokenUser[])) public buyTokenUser;
+    mapping(address => PreSaleInfo) public preSaleInfo; // Mapeamento de endereço para informações da pré-venda
+    mapping(address => BuyTokenInfo[]) public buyTokenInfo; //  Mapeamento de endereço para informações do token comprado
+    mapping(address => mapping(address => BuyTokenUser[])) public buyTokenUser; // Mapeamento de endereço para informações do usuário comprando o token
 
     IERC20 public token;
+    PreSaleInfo[] public allPreSaleInfo;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -64,7 +65,6 @@ contract PreSale is
             false,
             false
         );
-
         emit PreSaleCreated(
             contractAddress,
             owner,
@@ -207,9 +207,10 @@ contract PreSale is
     }
 
     function getBuyTokenUser(
-        address _contractToken
+        address _contractToken,
+        address _owner
     ) public view returns (BuyTokenUser[] memory) {
-        return buyTokenUser[msg.sender][_contractToken];
+        return buyTokenUser[_owner][_contractToken];
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {

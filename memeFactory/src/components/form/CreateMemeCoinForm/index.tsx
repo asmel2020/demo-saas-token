@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -17,9 +17,31 @@ import {
 } from "@/components/ui/form";
 import { InputNumber } from "@/components/input/InputNumber";
 import { CreateMemeCoinFormData, createMemeCoinSchema } from "./validate";
-
+import { useReadContract, useWriteContract, useAccount } from "wagmi";
+import memeFactoryAbi from "@/common/abi/memeFactory.abi";
+import addressContract from "@/common/addressContract";
+import { ethers } from "ethers";
+import templateTokenAbi from "@/common/abi/templateToken.abi";
+import { useEthersProvider } from "@/common/utils/useEthersProvider";
+import { addDay, addYear } from "@formkit/tempo";
+import { CalendarTime } from "@/components/input/CalendarTime";
+import { Toaster, toast } from "react-hot-toast";
 export function CreateMemeCoinForm() {
+  const [disabled, setDisabled] = useState(false);
   const [hasPresale, setHasPresale] = useState(false);
+  const { writeContractAsync, isSuccess } = useWriteContract();
+  const account = useAccount();
+  const provider = useEthersProvider();
+  const { data: allowance } = useReadContract({
+    abi: templateTokenAbi,
+    address: addressContract.tokenAddress as `0x${string}`,
+    functionName: "allowance",
+    args: [
+      account?.address as `0x${string}`,
+      addressContract.memeFactoryAddress as `0x${string}`,
+    ],
+    chainId: 1337,
+  });
 
   const form = useForm<CreateMemeCoinFormData>({
     resolver: zodResolver(createMemeCoinSchema),
@@ -31,15 +53,79 @@ export function CreateMemeCoinForm() {
       hasPresale: false,
       presalePrice: 1,
       presaleTokenAmount: 1,
+      presaleEndDate: addDay(new Date(), 1),
+      presaleStartDate: new Date(),
     },
   });
 
+  const approverSend = async () => {
+    // Simular uma chamada de API
+    const transactionCount = await provider?.getTransactionCount(
+      account.address as `0x${string}`,
+      "latest"
+    );
+    await writeContractAsync({
+      abi: templateTokenAbi,
+      address: addressContract.tokenAddress as `0x${string}`,
+      functionName: "approve",
+      args: [
+        addressContract.memeFactoryAddress as `0x${string}`,
+        ethers.parseEther("10000"),
+      ],
+      nonce: transactionCount,
+      chainId: 1337,
+    });
+  };
   const onSubmit = async (data: CreateMemeCoinFormData) => {
-    console.log(data);
+    setDisabled(true);
+    const dataContract = {
+      name: data.name,
+      symbol: data.symbol,
+      initialSupply: ethers.parseEther(data.initialSupply.toString()),
+      isSupplyMintable: data.isMintable,
+      isPreSale: data.hasPresale,
+      startTime: Math.floor(data.presaleStartDate.getTime() / 1000).toString(),
+      endTime: Math.floor(data.presaleEndDate.getTime() / 1000).toString(),
+      priceToken: ethers.parseEther(data.presalePrice.toString()),
+      amountSellToken: ethers.parseEther(data.presaleTokenAmount.toString()),
+      salt: ethers.keccak256(ethers.randomBytes(32)),
+    };
+
+    console.log(dataContract);
+    const transactionCount = await provider?.getTransactionCount(
+      account.address as `0x${string}`,
+      "latest"
+    );
+    try {
+      await writeContractAsync({
+        abi: memeFactoryAbi,
+        address: addressContract.memeFactoryAddress as `0x${string}`,
+        functionName: "deploy",
+        args: [dataContract],
+        nonce: transactionCount,
+        chainId: 1337,
+      });
+    } catch (error) {
+      setDisabled(false);
+    }
   };
 
+  console.log(form.formState.errors);
+  useEffect(() => {
+    if (isSuccess) {
+      setDisabled(false);
+    }
+  }, [isSuccess]);
+
+  useEffect(() => {
+    console.log("form.formState.errors");
+    if (form.formState.errors?.presaleTokenAmount) {
+      toast.error(form.formState.errors.presaleTokenAmount.message as string);
+    }
+  }, [form.formState.errors]);
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b text-black flex justify-center">
+      <Toaster />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -49,7 +135,11 @@ export function CreateMemeCoinForm() {
               <FormItem>
                 <FormLabel>Nome da MemeCoin</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: DogeCoin" {...field} />
+                  <Input
+                    placeholder="Ex: DogeCoin"
+                    {...field}
+                    disabled={disabled}
+                  />
                 </FormControl>
                 <FormDescription>
                   Escolha um nome único para sua memeCoin.
@@ -66,7 +156,11 @@ export function CreateMemeCoinForm() {
               <FormItem>
                 <FormLabel>Símbolo</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: DOGE" {...field} />
+                  <Input
+                    placeholder="Ex: DOGE"
+                    {...field}
+                    disabled={disabled}
+                  />
                 </FormControl>
                 <FormDescription>
                   Um símbolo curto para representar sua memeCoin.
@@ -86,6 +180,7 @@ export function CreateMemeCoinForm() {
                   <InputNumber
                     onChange={field.onChange}
                     valueInitial={field.value.toString()}
+                    disabled={disabled}
                   />
                 </FormControl>
                 <FormDescription>
@@ -111,6 +206,7 @@ export function CreateMemeCoinForm() {
                   <Switch
                     checked={field.value}
                     onCheckedChange={field.onChange}
+                    disabled={disabled}
                   />
                 </FormControl>
               </FormItem>
@@ -135,6 +231,7 @@ export function CreateMemeCoinForm() {
                       field.onChange(checked);
                       setHasPresale(checked);
                     }}
+                    disabled={disabled}
                   />
                 </FormControl>
               </FormItem>
@@ -150,12 +247,13 @@ export function CreateMemeCoinForm() {
                   <FormItem>
                     <FormLabel>Data de Início da Pré-venda</FormLabel>
                     <FormControl>
-                      <Input
-                        type="datetime-local"
-                        /*  {...field} */
-                        onChange={(e) =>
-                          field.onChange(new Date(e.target.value))
-                        }
+                      <CalendarTime
+                        disabled={disabled}
+                        onSelect={field.onChange}
+                        selected={field.value}
+                        dataInit={new Date()}
+                        dateEnd={addYear(new Date(), 5)}
+                        isClose={true}
                       />
                     </FormControl>
                     <FormMessage />
@@ -170,13 +268,24 @@ export function CreateMemeCoinForm() {
                   <FormItem>
                     <FormLabel>Data de Término da Pré-venda</FormLabel>
                     <FormControl>
-                      <Input
+                      <CalendarTime
+                        disabled={disabled}
+                        onSelect={field.onChange}
+                        selected={field.value}
+                        dataInit={new Date()}
+                        dateEnd={addYear(new Date(), 5)}
+                        isClose={true}
+                      />
+                      {/*  <Input
+                        min="2024-12-04"
+                        max="2024-12-31"
                         type="datetime-local"
-                        /*   {...field} */
+                       
                         onChange={(e) =>
                           field.onChange(new Date(e.target.value))
                         }
-                      />
+                        disabled={disabled}
+                      /> */}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,6 +302,7 @@ export function CreateMemeCoinForm() {
                       <InputNumber
                         onChange={field.onChange}
                         valueInitial={field.value.toString()}
+                        disabled={disabled}
                       />
                     </FormControl>
                     <FormDescription>
@@ -213,6 +323,7 @@ export function CreateMemeCoinForm() {
                       <InputNumber
                         onChange={field.onChange}
                         valueInitial={field.value.toString()}
+                        disabled={disabled}
                       />
                     </FormControl>
                     <FormDescription>
@@ -224,8 +335,15 @@ export function CreateMemeCoinForm() {
               />
             </>
           )}
-
-          <Button type="submit">Criar MemeCoin</Button>
+          {Number(allowance || 0) < ethers.parseEther("20") ? (
+            <Button type="button" onClick={approverSend} disabled={disabled}>
+              Approver
+            </Button>
+          ) : (
+            <Button type="submit" disabled={disabled}>
+              Criar MemeCoin
+            </Button>
+          )}
         </form>
       </Form>
     </section>

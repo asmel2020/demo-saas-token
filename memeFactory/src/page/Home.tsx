@@ -1,11 +1,10 @@
-// src/pages/Home.jsx
 import { ConnectWallet } from "@/components/buttons/connect-wallet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock, Rocket, Zap } from "lucide-react";
-import React from "react";
-
+import { useLocation } from "wouter";
 const Home = () => {
+  const [_, setLocation] = useLocation();
   return (
     <div>
       <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-blue-500 to-purple-600 text-white flex justify-center">
@@ -22,14 +21,11 @@ const Home = () => {
               </p>
             </div>
             <div className="space-x-4">
-              <Button className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-bold text-lg px-8 py-3">
-                Começar
-              </Button>
               <Button
-                variant="outline"
-                className="text-yellow-300 border-yellow-300 hover:bg-yellow-300 hover:text-blue-900 font-bold text-lg px-8 py-3"
+                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-bold text-lg px-8 py-3"
+                onClick={() => setLocation("/create-token")}
               >
-                Saiba Mais
+                Começar
               </Button>
             </div>
           </div>
@@ -130,7 +126,10 @@ const Home = () => {
                 Seja um dos primeiros a adquirir tokens das novas memecoins
                 antes do lançamento oficial.
               </p>
-              <Button className="mt-4 bg-white text-orange-500 hover:bg-yellow-100">
+              <Button
+                className="mt-4 bg-white text-orange-500 hover:bg-yellow-100"
+                onClick={() => setLocation("/list-presale")}
+              >
                 Ver Tokens Disponíveis
               </Button>
             </div>
